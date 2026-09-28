@@ -1,0 +1,252 @@
+{
+  "name": "FlowPilot AI - Autonomous Customer Refund Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "flowpilot/customer-request",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Incoming Customer Request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "flowpilot-customer-request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body ?? $json;\nconst request = String(body.request ?? body.message ?? '');\nconst customerId = String(body.customer_id ?? 'CUST-DEMO');\nconst orderId = String(body.order_id ?? 'ORD-DEMO');\nreturn [{\n  json: {\n    request,\n    customer_id: customerId,\n    order_id: orderId,\n    received_at: new Date().toISOString(),\n    source: body.source ?? 'webhook'\n  }\n}];"
+      },
+      "id": "2",
+      "name": "Normalize Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.OPENAI_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"model\": \"gpt-4o-mini\",\n  \"temperature\": 0,\n  \"response_format\": {\"type\":\"json_object\"},\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are FlowPilot AI, a customer-service decision agent. Analyze the customer request using the policy below. Never invent facts. Return ONLY JSON with keys: intent, urgency, entities, decision, confidence, reason, customer_message. decision must be one of AUTO_REFUND, HUMAN_APPROVAL, INFORMATION_NEEDED, NO_ACTION. Policy: duplicate payments can be refunded automatically when the duplicate transaction is verified and the amount is <= 5000 INR; amounts above 5000 require human approval; missing order or transaction evidence requires information needed; suspicious or policy-unclear cases require human approval. You are deciding within guardrails, not freely acting.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Customer request: {{$json.request}}\\nCustomer ID: {{$json.customer_id}}\\nOrder ID: {{$json.order_id}}\"\n    }\n  ]\n}"
+      },
+      "id": "3",
+      "name": "AI Decision Engine",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.choices?.[0]?.message?.content ?? '{}';\nlet decision;\ntry { decision = JSON.parse(raw); } catch (e) {\n  decision = {\n    intent: 'unknown',\n    urgency: 'normal',\n    entities: {},\n    decision: 'HUMAN_APPROVAL',\n    confidence: 0,\n    reason: 'AI response could not be parsed safely.',\n    customer_message: 'Your request has been sent for human review.'\n  };\n}\nreturn [{ json: { ...$node['Normalize Request'].json, ...decision } }];"
+      },
+      "id": "4",
+      "name": "Validate AI Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{$json.decision}}",
+              "rightValue": "AUTO_REFUND",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "leftValue": "={{Number($json.confidence)}}",
+              "rightValue": 0.85,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "5",
+      "name": "Guardrail Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        940,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    status: 'AUTO_RESOLVED',\n    action: 'REFUND_CREATED',\n    refund_id: 'RF-' + Date.now(),\n    customer_id: $json.customer_id,\n    order_id: $json.order_id,\n    reason: $json.reason,\n    message: $json.customer_message,\n    audit: {\n      agent_decision: $json.decision,\n      confidence: $json.confidence,\n      timestamp: new Date().toISOString()\n    }\n  }\n}];"
+      },
+      "id": "6",
+      "name": "Execute Refund",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1180,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    status: 'HUMAN_REVIEW',\n    action: 'APPROVAL_REQUIRED',\n    customer_id: $json.customer_id,\n    order_id: $json.order_id,\n    decision: $json.decision,\n    confidence: $json.confidence,\n    reason: $json.reason,\n    message: $json.customer_message,\n    audit: {\n      timestamp: new Date().toISOString(),\n      escalation: true\n    }\n  }\n}];"
+      },
+      "id": "7",
+      "name": "Human Approval Queue",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1180,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {}
+      },
+      "id": "8",
+      "name": "Return Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1420,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Incoming Customer Request": {
+      "main": [
+        [
+          {
+            "node": "Normalize Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Request": {
+      "main": [
+        [
+          {
+            "node": "AI Decision Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Decision Engine": {
+      "main": [
+        [
+          {
+            "node": "Validate AI Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate AI Output": {
+      "main": [
+        [
+          {
+            "node": "Guardrail Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardrail Check": {
+      "main": [
+        [
+          {
+            "node": "Execute Refund",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Human Approval Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Refund": {
+      "main": [
+        [
+          {
+            "node": "Return Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Human Approval Queue": {
+      "main": [
+        [
+          {
+            "node": "Return Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "flowpilot-mvp-v1",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

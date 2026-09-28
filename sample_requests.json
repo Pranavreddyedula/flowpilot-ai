@@ -1,0 +1,20 @@
+[
+  {
+    "request": "I was charged twice for order ORD-1001. Please refund the duplicate payment of Rs 1499.",
+    "customer_id": "CUST-101",
+    "order_id": "ORD-1001",
+    "expected": "AUTO_REFUND"
+  },
+  {
+    "request": "I was charged twice for order ORD-1002. The duplicate amount is Rs 12500. Please refund it.",
+    "customer_id": "CUST-102",
+    "order_id": "ORD-1002",
+    "expected": "HUMAN_APPROVAL"
+  },
+  {
+    "request": "I think I was charged twice but I don't have the order number. Can you check?",
+    "customer_id": "CUST-103",
+    "order_id": "",
+    "expected": "INFORMATION_NEEDED"
+  }
+]

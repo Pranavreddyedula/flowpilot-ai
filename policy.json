@@ -1,0 +1,28 @@
+{
+  "name": "FlowPilot Customer Refund Policy",
+  "currency": "INR",
+  "rules": [
+    {
+      "rule": "Duplicate payment <= 5000",
+      "action": "AUTO_REFUND"
+    },
+    {
+      "rule": "Duplicate payment > 5000",
+      "action": "HUMAN_APPROVAL"
+    },
+    {
+      "rule": "Missing order/transaction evidence",
+      "action": "INFORMATION_NEEDED"
+    },
+    {
+      "rule": "Suspicious or unclear policy case",
+      "action": "HUMAN_APPROVAL"
+    }
+  ],
+  "guardrails": [
+    "Confidence must be >= 0.85 for automatic action.",
+    "AI can only choose from approved decision values.",
+    "High-value or ambiguous requests require human approval.",
+    "Every action must create an audit record."
+  ]
+}
