@@ -426,6 +426,20 @@ Execute Refund   Human Approval
 
 &#x20;         JSON Audit
 
+
+🛠️ Tech Stack
+Category	           Technology
+Workflow  Automation	n8n Cloud
+AI / LLM	            Google Gemini
+AI Model            	Gemini 3.5 Flash-Lite
+Backend Logic	        JavaScript / n8n Code Nodes
+Integration	          Webhooks / REST APIs
+Notifications	        Gmail
+Data Format         	JSON
+Testing             	PowerShell
+Version Control	      Git & GitHub
+Frontend Prototype	  HTML + CSS + JavaScript
+
 🧩 n8n Workflow Nodes
 
 1\. Incoming Customer Request
