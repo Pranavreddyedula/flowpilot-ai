@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Database and local runtime
+backend/data/*.db
+backend/data/*.sqlite3
+*.log
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# OS/editor
+.DS_Store
+.vscode/
+
+# Build artifacts
+coverage/
+.pytest_cache/
+.mypy_cache/

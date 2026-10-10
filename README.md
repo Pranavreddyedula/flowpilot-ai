@@ -1,10 +1,8 @@
 \# 🚀 FlowPilot AI — Autonomous Business Process Automation
 
-
+> Status: Verified locally in this workspace. The backend policy engine, FastAPI endpoints, local SQLite workflow, MCP server, and frontend build were tested successfully. Real AWS Bedrock and Alexa+ integrations are not claimed as live unless credentials and runtime verification are available.
 
 > \*\*AI-powered customer-service automation using n8n, Google Gemini, policy guardrails, human-in-the-loop approval, Gmail notifications, and auditable JSON results.\*\*
-
-
 
 \---
 

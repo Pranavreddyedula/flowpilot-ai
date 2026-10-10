@@ -2,6 +2,8 @@
 
 ## 1. Core submission
 - [x] Problem statement: repetitive customer-service operations
+- [x] Verified local implementation: FastAPI backend, policy guardrails, MCP server, and frontend build/test checks passed in the repo-local venv and Node environment
+- [x] External cloud claims are explicitly labeled as unverified until credentials and runtime access are provided
 - [x] AI-powered decision making
 - [x] n8n orchestration
 - [x] Human-in-the-loop guardrail
