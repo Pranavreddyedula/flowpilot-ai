@@ -1,5 +1,7 @@
 # 3-Minute Hackathon Demo Script
 
+> Verified local demo path: the project was validated in a local repo environment with a working backend, policy engine, and frontend build. This script demonstrates the local, deterministic flow; any live AWS, Alexa+, or cloud integrations are not claimed as active unless separately verified in a live runtime.
+
 ## 0:00 — Problem
 “Customer-service teams receive repetitive requests from email, forms and chat. Humans repeatedly classify, verify policy, check customer context and decide what to do.”
 
